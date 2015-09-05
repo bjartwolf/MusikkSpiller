@@ -60,15 +60,11 @@ type WaveStream() =
    override this.Seek(offset:int64, origin: SeekOrigin):int64 = failwith "no seek"
    override this.SetLength(value: int64) = failwith "no set length"
    override this.Write(buffer: byte[], offset:int, count:int) = failwith "no write"
-//16383
-//let PlayBeep (frequency:UInt16) (msDuration:int) (volume :UInt16 )= 
-//    writer.Close();
-//    mStrm.Close();
-[<EntryPoint>]
+
+<EntryPoint>]
 let main argv = 
     let ws = new WaveStream()
-//    PlayBeep 440us 2000 16300us 
     (new System.Media.SoundPlayer(ws)).Play()
     printfn "%A" argv
     Console.ReadKey() |> ignore
-    0 // return an integer exit code
+    0 
