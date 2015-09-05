@@ -1,25 +1,12 @@
-﻿// Learn more about F# at http://fsharp.org
-// See the 'F# Tutorial' project for more help.
-open System
+﻿open System
 open System.Collections.Generic
 open System.IO
 open System.Linq
-type WaveStream() =
-    inherit Stream()
-    override this.CanRead with get () = true 
-    override this.CanSeek with get () = false 
-    override this.CanWrite with get () = false 
-    override this.Length with get () = failwith "no length I am infinite" 
-    override this.Position with get () = failwith "no position" 
-                           and set (value) = failwith "no set pos" 
-    override this.Flush() = ()
-    override this.Read(buffer: byte[], offset:int, count: int) = failwith "no read yet"
-    override this.Seek(offset:int64, origin: SeekOrigin):int64 = failwith "no seek"
-    override this.SetLength(value: int64) = failwith "no set length"
-    override this.Write(buffer: byte[], offset:int, count:int) = failwith "no write"
 
-//16383
-let PlayBeep (frequency:UInt16) (msDuration:int) (volume :UInt16 )= 
+let generateStream() =
+    let frequency = 440us
+    let msDuration = 2000
+    let volume = 16300us    
     let mStrm = new MemoryStream();
     let writer = new BinaryWriter(mStrm);
     let TAU :double= 2.0 * Math.PI
@@ -35,7 +22,6 @@ let PlayBeep (frequency:UInt16) (msDuration:int) (volume :UInt16 )=
     let samples = (int)((decimal)(samplesPerSecond * msDuration) / 1000m)//wat
     let dataChunkSize = samples * (int)frameSize;
     let fileSize = waveSize + headerSize + formatChunkSize + headerSize + dataChunkSize;
-    // var encoding = new System.Text.UTF8Encoding();
     writer.Write(0x46464952); // = encoding.GetBytes("RIFF")
     writer.Write(fileSize);
     writer.Write(0x45564157); // = encoding.GetBytes("WAVE")
@@ -57,12 +43,32 @@ let PlayBeep (frequency:UInt16) (msDuration:int) (volume :UInt16 )=
         let s = (uint16)(amp * Math.Sin(theta * (double)step))
         writer.Write(s)
     mStrm.Seek(0L, SeekOrigin.Begin) |> ignore
-    (new System.Media.SoundPlayer(mStrm)).Play()
-    writer.Close();
-    mStrm.Close();
+    mStrm 
+
+type WaveStream() =
+   inherit Stream()
+   let strm  = generateStream() 
+   override this.CanRead with get () = true 
+   override this.CanSeek with get () = false 
+   override this.CanWrite with get () = false 
+   override this.Length with get () = failwith "no length I am infinite" 
+   override this.Position with get () = failwith "no position" 
+                          and set (value) = failwith "no set pos" 
+   override this.Flush() = ()
+   override this.Read(buffer: byte[], offset:int, count: int) =
+            strm.Read(buffer,offset,count)  
+   override this.Seek(offset:int64, origin: SeekOrigin):int64 = failwith "no seek"
+   override this.SetLength(value: int64) = failwith "no set length"
+   override this.Write(buffer: byte[], offset:int, count:int) = failwith "no write"
+//16383
+//let PlayBeep (frequency:UInt16) (msDuration:int) (volume :UInt16 )= 
+//    writer.Close();
+//    mStrm.Close();
 [<EntryPoint>]
 let main argv = 
-    PlayBeep 440us 2000 16300us 
+    let ws = new WaveStream()
+//    PlayBeep 440us 2000 16300us 
+    (new System.Media.SoundPlayer(ws)).Play()
     printfn "%A" argv
     Console.ReadKey() |> ignore
     0 // return an integer exit code
