@@ -19,7 +19,7 @@ let generateStream() =
     let frameSize = tracks * ((bitsPerSample + 7s) / 8s)
     let bytesPerSecond = samplesPerSecond * (int)frameSize
     let waveSize = 4;
-    let samples = (int)((decimal)(samplesPerSecond * msDuration) / 1000m)//wat
+    let samples = (int)(samplesPerSecond * msDuration / 1000)//wat
     let dataChunkSize = samples * (int)frameSize;
     let fileSize = waveSize + headerSize + formatChunkSize + headerSize + dataChunkSize;
     writer.Write(0x46464952); // = encoding.GetBytes("RIFF")
@@ -41,7 +41,8 @@ let generateStream() =
     let amp:double = (double)(volume >>> 2) // so we simply set amp = volume / 2
     for step = 0 to samples do
         let s = (uint16)(amp * Math.Sin(theta * (double)step))
-        writer.Write(s)
+        let s1 = (uint16)(amp *2.0* Math.Cos(3.0 + theta * (double)step*2.0))
+        writer.Write(s+s1)
     mStrm.Seek(0L, SeekOrigin.Begin) |> ignore
     mStrm 
 
@@ -61,10 +62,10 @@ type WaveStream() =
    override this.SetLength(value: int64) = failwith "no set length"
    override this.Write(buffer: byte[], offset:int, count:int) = failwith "no write"
 
-<EntryPoint>]
+[<EntryPoint>]
 let main argv = 
     let ws = new WaveStream()
     (new System.Media.SoundPlayer(ws)).Play()
     printfn "%A" argv
     Console.ReadKey() |> ignore
-    0 
+    0 // return an integer exit code
