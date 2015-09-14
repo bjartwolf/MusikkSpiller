@@ -83,27 +83,6 @@ type Thingy(input: IEnumerable<byte> ) =
     interface System.Collections.IEnumerable with
         member this.GetEnumerator() = enumthing :> System.Collections.IEnumerator
 
-type EnumerableFromEnumerator(input: IEnumerator<byte> ) =
-    interface IEnumerable<byte> with
-        member this.GetEnumerator() = input 
-    interface System.Collections.IEnumerable with
-        member this.GetEnumerator() = input :> System.Collections.IEnumerator
-
-let takeSkip (sequence: IEnumerable<byte>) (n: int) : (byte[] * IEnumerable<byte>) = 
-    let enumerator = sequence.GetEnumerator()
-    let data = Array.zeroCreate(n) 
-    let rec readSequence i = 
-        let moreData = enumerator.MoveNext() 
-        if (not moreData || i = n) then i 
-        else 
-            data.[i] <- enumerator.Current
-            readSequence (i+1) 
-    let readBytes = readSequence 0
-    let sequence' = new EnumerableFromEnumerator(enumerator) :> IEnumerable<byte>
-    if (readBytes = n) then 
-        (data, sequence') 
-    else 
-        (data.[0 .. readBytes], sequence') 
 
 type WaveStream() =
    inherit Stream()
