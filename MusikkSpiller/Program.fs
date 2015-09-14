@@ -76,10 +76,10 @@ type EnumeratorThingy() =
         member this.Dispose() = () 
 
 
-type Thingy() =
-    let enumthing =new EnumeratorThingy() 
+type Thingy(input: IEnumerable<byte> ) =
+    let enumthing = input.GetEnumerator()
     interface IEnumerable<byte> with
-        member this.GetEnumerator() = enumthing :> IEnumerator<byte>
+        member this.GetEnumerator() = enumthing
     interface System.Collections.IEnumerable with
         member this.GetEnumerator() = enumthing :> System.Collections.IEnumerator
 
