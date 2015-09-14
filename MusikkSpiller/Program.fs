@@ -62,20 +62,26 @@ let rec sound t = seq {
 } 
 
 type EnumeratorThingy() =
+    let mutable counter = 0
+    let getCurrent() = 
+        86uy + (BitConverter.GetBytes(counter) |> Seq.head)
     interface IEnumerator<byte> with
-        member this.Current with get() = 86uy
+        member this.Current with get() = getCurrent()
     interface System.Collections.IEnumerator with
-        member this.Current with get() = 86uy :> obj
-        member this.MoveNext() = true 
+        member this.Current with get() = getCurrent() :> obj
+        member this.MoveNext() = counter <- counter + 1 
+                                 true 
         member this.Reset() = ()
     interface IDisposable with
         member this.Dispose() = () 
 
+
 type Thingy() =
+    let enumthing =new EnumeratorThingy() 
     interface IEnumerable<byte> with
-        member this.GetEnumerator() = new EnumeratorThingy() :> IEnumerator<byte>
+        member this.GetEnumerator() = enumthing :> IEnumerator<byte>
     interface System.Collections.IEnumerable with
-        member this.GetEnumerator() = new EnumeratorThingy() :> System.Collections.IEnumerator
+        member this.GetEnumerator() = enumthing :> System.Collections.IEnumerator
 
 
 type WaveStream() =
