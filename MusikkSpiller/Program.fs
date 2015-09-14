@@ -13,7 +13,7 @@ let generateStream() =
     let formatChunkSize = 16
     let headerSize = 8
     let formatType= 1s
-    let tracks = 1s
+    let tracks = 10s
     let samplesPerSecond = 44100
     let bitsPerSample = 16s
     let frameSize = tracks * ((bitsPerSample + 7s) / 8s)
@@ -35,16 +35,9 @@ let generateStream() =
     writer.Write(bitsPerSample);
     writer.Write(0x61746164); // = encoding.GetBytes("data")
     writer.Write(dataChunkSize);
-    let theta :double= (double)frequency * TAU / (double)samplesPerSecond;
-    // 'volume' is UInt16 with range 0 thru Uint16.MaxValue ( = 65 535)
-    // we need 'amp' to have the range of 0 thru Int16.MaxValue ( = 32 767)
-    let amp:double = (double)(volume >>> 2) // so we simply set amp = volume / 2
-//    for step = 0 to samples do
-//        let s = (uint16)(amp * Math.Sin(theta * (double)step))
-//        let s1 = (uint16)(amp *2.0* Math.Cos(3.0 + theta * (double)step*2.0))
-//        writer.Write(s+s1)
     mStrm.Seek(0L, SeekOrigin.Begin) |> ignore
     mStrm 
+
 // should probably use a list for the bytes or something
 let strmAsSeq (stream: Stream): byte seq = 
     Diagnostics.Debug.Assert(stream.Length < (int64)Int32.MaxValue)
@@ -55,6 +48,8 @@ let strmAsSeq (stream: Stream): byte seq =
     arr |> Array.toSeq
 
 let rec sound t = seq {
+    // 'volume' is UInt16 with range 0 thru Uint16.MaxValue ( = 65 535)
+    // we need 'amp' to have the range of 0 thru Int16.MaxValue ( = 32 767)
     let volume = 16300us    
     let samplesPerSecond = 44100
     let amp:double = (double)(volume >>> 2) // so we simply set amp = volume / 2
@@ -65,6 +60,23 @@ let rec sound t = seq {
     yield! BitConverter.GetBytes((uint16)(amp * Math.Sin(theta * (double)t)))
     yield! sound ((t+1) % 100000)
 } 
+
+type EnumeratorThingy() =
+    interface IEnumerator<byte> with
+        member this.Current with get() = 86uy
+    interface System.Collections.IEnumerator with
+        member this.Current with get() = 86uy :> obj
+        member this.MoveNext() = true 
+        member this.Reset() = ()
+    interface IDisposable with
+        member this.Dispose() = () 
+
+type Thingy() =
+    interface IEnumerable<byte> with
+        member this.GetEnumerator() = new EnumeratorThingy() :> IEnumerator<byte>
+    interface System.Collections.IEnumerable with
+        member this.GetEnumerator() = new EnumeratorThingy() :> System.Collections.IEnumerator
+
 
 type WaveStream() =
    inherit Stream()
@@ -92,7 +104,9 @@ type WaveStream() =
 [<EntryPoint>]
 let main argv = 
     let ws = new WaveStream()
-    (new System.Media.SoundPlayer(ws)).Play()
+    let player = new System.Media.SoundPlayer(ws);
+    player
+    player.Play()
     printfn "%A" argv
     Console.ReadKey() |> ignore
     0 // return an integer exit code
