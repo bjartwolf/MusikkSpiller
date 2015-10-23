@@ -3,10 +3,9 @@ open System.Collections.Generic
 open System.IO
 open System.Linq
 
-let generateStream() =
+let getHeaders () =
     let frequency = 440us
     let msDuration = 1000
-    let volume = 16300us
     let mStrm = new MemoryStream();
     let writer = new BinaryWriter(mStrm);
     let formatChunkSize = 16
@@ -21,30 +20,22 @@ let generateStream() =
     let samples = (int)(samplesPerSecond * msDuration / 1000)//wat
     let dataChunkSize = samples * (int)frameSize;
     let fileSize = waveSize + headerSize + formatChunkSize + headerSize + dataChunkSize;
-    writer.Write(0x46464952); // = encoding.GetBytes("RIFF")
-    writer.Write(fileSize);
-    writer.Write(0x45564157); // = encoding.GetBytes("WAVE")
-    writer.Write(0x20746D66); // = encoding.GetBytes("fmt ")
-    writer.Write(formatChunkSize);
-    writer.Write(formatType);
-    writer.Write(tracks);
-    writer.Write(samplesPerSecond);
-    writer.Write(bytesPerSecond);
-    writer.Write(frameSize);
-    writer.Write(bitsPerSample);
-    writer.Write(0x61746164); // = encoding.GetBytes("data")
-    writer.Write(dataChunkSize);
-    mStrm.Seek(0L, SeekOrigin.Begin) |> ignore
-    mStrm 
+    seq {
+        yield [|'R'B ; 'I'B; 'F'B;'F'B |]// writer.Write(0x46464952); // = encoding.GetBytes("RIFF")
+        yield (BitConverter.GetBytes(fileSize))//writer.Write(fileSize);
+        yield [|'W'B ; 'A'B; 'V'B;'E'B |]// writer.Write(0x45564157); // = encoding.GetBytes("WAVE")
+        yield [|'f'B ; 'm'B; 't'B; ' 'B|] // = encoding.GetBytes("fmt ")
+        yield (BitConverter.GetBytes(formatChunkSize))// writer.Write(formatChunkSize);
+        yield (BitConverter.GetBytes(formatType))// writer.Write(formatType);
+        yield (BitConverter.GetBytes(tracks)) //writer.Write(tracks);
+        yield (BitConverter.GetBytes(samplesPerSecond)) //writer.Write(samplesPerSecond);
+        yield (BitConverter.GetBytes(bytesPerSecond)) //writer.Write(bytesPerSecond);
+        yield (BitConverter.GetBytes(frameSize)) //writer.Write(frameSize);
+        yield (BitConverter.GetBytes(bitsPerSample)) //writer.Write(bitsPerSample);
+        yield [|'d'B ; 'a'B; 't'B;'a'B |]/// writer.Write(0x61746164); // = encoding.GetBytes("data")
+        yield BitConverter.GetBytes(dataChunkSize) //writer.Write(dataChunkSize);
+     } |> Array.concat
 
-// should probably use a list for the bytes or something
-let strmAsSeq (stream: Stream): byte seq = 
-    Diagnostics.Debug.Assert(stream.Length < (int64)Int32.MaxValue)
-    let len = (int)stream.Length
-    let arr:byte[] = Array.zeroCreate len 
-    let bytesRead = stream.Read(arr,0,len) 
-    if not (bytesRead = len) then failwith "Could not read everything"
-    arr |> Array.toSeq
 
 let rec sound t = seq {
     // 'volume' is UInt16 with range 0 thru Uint16.MaxValue ( = 65 535)
@@ -55,7 +46,6 @@ let rec sound t = seq {
     let frequency = 440us
     let tau :double= 2.0 * Math.PI
     let theta :double= (double)frequency * tau / (double)samplesPerSecond;
-    let volume = 16300us
     yield! BitConverter.GetBytes((uint16)(amp * Math.Sin(theta * (double)t)))
     if (t < 44100) then yield! sound ((t+1))
 } 
@@ -67,9 +57,8 @@ let takeSkip (s: IEnumerable<byte>) (n: int) : (byte[] * IEnumerable<byte>) =
 
 type WaveStream() =
    inherit Stream()
-   let firstData = generateStream() |> strmAsSeq
    let sounddata = sound 0
-   let mutable data = Seq.append firstData sounddata 
+   let mutable data = Seq.append (getHeaders()) sounddata 
    override this.CanRead with get () = true 
    override this.CanSeek with get () = false 
    override this.CanWrite with get () = false 
