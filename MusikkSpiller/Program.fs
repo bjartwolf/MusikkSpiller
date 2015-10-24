@@ -4,9 +4,10 @@ open System.IO
 open System.Linq
 
 let samplesPerSecond = 44100
+let duration = 10
+let msDuration = duration*1000
 
 let getHeaders () =
-    let msDuration = 1000
     let formatChunkSize = 16
     let headerSize = 8
     let formatType= 1s
@@ -44,7 +45,7 @@ let rec sound t = seq {
     let tau :double= 2.0 * Math.PI
     let theta :double= (double)frequency * tau / (double)samplesPerSecond;
     yield! BitConverter.GetBytes((uint16)(amp * Math.Sin(theta * (double)t)))
-    if (t < 44100) then yield! sound ((t+1))
+    if (t < samplesPerSecond*duration) then yield! sound ((t+1))
 } 
 
 let takeSkip (s: IEnumerable<byte>) (n: int) : (byte[] * IEnumerable<byte>) = 
