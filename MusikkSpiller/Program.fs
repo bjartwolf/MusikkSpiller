@@ -48,7 +48,7 @@ let rec sound t = seq {
     if (t < samplesPerSecond*duration) then yield! sound ((t+1))
 } 
 
-let takeSkip (s: IEnumerable<byte>) (n: int) : (byte[] * IEnumerable<byte>) = 
+let takeSkip (s: seq<byte>) (n: int) : (byte[] * seq<byte>) = 
     let c = Seq.cache s 
     let skipValues = Math.Min(n,c |> Seq.length)
     (c |> Seq.truncate n |> Seq.toArray , c |> Seq.skip skipValues)
@@ -65,8 +65,7 @@ type WaveStream() =
             let (bytes,data') = takeSkip data count 
             data <- data'
             bytes |> copyTo buffer 
-            let length = bytes.Length
-            length
+            bytes.Length
    override this.Seek(offset:int64, origin: SeekOrigin):int64 = failwith "no seek"
    override this.SetLength(value: int64) = failwith "no set length"
    override this.Write(buffer: byte[], offset:int, count:int) = failwith "no write"
