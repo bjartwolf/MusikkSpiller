@@ -20,19 +20,19 @@ let getHeaders () =
     let dataChunkSize = samples * (int)frameSize;
     let fileSize = waveSize + headerSize + formatChunkSize + headerSize + dataChunkSize;
     seq {
-        yield [|'R'B ; 'I'B; 'F'B;'F'B |]// writer.Write(0x46464952); // = encoding.GetBytes("RIFF")
-        yield (BitConverter.GetBytes(fileSize))//writer.Write(fileSize);
-        yield [|'W'B ; 'A'B; 'V'B;'E'B |]// writer.Write(0x45564157); // = encoding.GetBytes("WAVE")
-        yield [|'f'B ; 'm'B; 't'B; ' 'B|] // = encoding.GetBytes("fmt ")
-        yield (BitConverter.GetBytes(formatChunkSize))// writer.Write(formatChunkSize);
-        yield (BitConverter.GetBytes(formatType))// writer.Write(formatType);
-        yield (BitConverter.GetBytes(tracks)) //writer.Write(tracks);
-        yield (BitConverter.GetBytes(samplesPerSecond)) //writer.Write(samplesPerSecond);
-        yield (BitConverter.GetBytes(bytesPerSecond)) //writer.Write(bytesPerSecond);
-        yield (BitConverter.GetBytes(frameSize)) //writer.Write(frameSize);
-        yield (BitConverter.GetBytes(bitsPerSample)) //writer.Write(bitsPerSample);
-        yield [|'d'B ; 'a'B; 't'B;'a'B |]/// writer.Write(0x61746164); // = encoding.GetBytes("data")
-        yield BitConverter.GetBytes(dataChunkSize) //writer.Write(dataChunkSize);
+        yield [|'R'B ; 'I'B; 'F'B;'F'B |]
+        yield (BitConverter.GetBytes(fileSize))
+        yield [|'W'B ; 'A'B; 'V'B;'E'B |]
+        yield [|'f'B ; 'm'B; 't'B; ' 'B|] 
+        yield (BitConverter.GetBytes(formatChunkSize))
+        yield (BitConverter.GetBytes(formatType))
+        yield (BitConverter.GetBytes(tracks))
+        yield (BitConverter.GetBytes(samplesPerSecond))
+        yield (BitConverter.GetBytes(bytesPerSecond))
+        yield (BitConverter.GetBytes(frameSize))
+        yield (BitConverter.GetBytes(bitsPerSample))
+        yield [|'d'B ; 'a'B; 't'B;'a'B |]
+        yield BitConverter.GetBytes(dataChunkSize)
      } |> Array.concat
 
 
