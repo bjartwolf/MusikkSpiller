@@ -3,16 +3,14 @@ open System.Collections.Generic
 open System.IO
 open System.Linq
 
+let samplesPerSecond = 44100
+
 let getHeaders () =
-    let frequency = 440us
     let msDuration = 1000
-    let mStrm = new MemoryStream();
-    let writer = new BinaryWriter(mStrm);
     let formatChunkSize = 16
     let headerSize = 8
     let formatType= 1s
     let tracks = 1s
-    let samplesPerSecond = 44100
     let bitsPerSample = 16s
     let frameSize = tracks * ((bitsPerSample + 7s) / 8s)
     let bytesPerSecond = samplesPerSecond * (int)frameSize
@@ -41,7 +39,6 @@ let rec sound t = seq {
     // 'volume' is UInt16 with range 0 thru Uint16.MaxValue ( = 65 535)
     // we need 'amp' to have the range of 0 thru Int16.MaxValue ( = 32 767)
     let volume = 16300us
-    let samplesPerSecond = 44100
     let amp:double = (double)(volume >>> 2) // so we simply set amp = volume / 2
     let frequency = 440us
     let tau :double= 2.0 * Math.PI
