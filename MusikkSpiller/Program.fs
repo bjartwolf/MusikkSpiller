@@ -4,7 +4,7 @@ open System.IO
 open System.Linq
 
 let samplesPerSecond = 44100
-let duration = 10
+let duration = 1
 let msDuration = duration*1000
 
 let getHeaders () =
@@ -78,10 +78,7 @@ type WaveStream() =
 [<EntryPoint>]
 let main argv = 
     let ws = new WaveStream()
-    let ms = new MemoryStream()
-    ws.CopyTo(ms)
-    ms.Position <- 0L
-    let player = new System.Media.SoundPlayer(ms)
+    let player = new System.Media.SoundPlayer(ws)
     player.Play()
     Console.ReadKey() |> ignore
     0 
