@@ -5,7 +5,7 @@ open System.Linq
 open NAudio.Wave
 
 let samplesPerSecond = 44100
-let duration = 10
+let duration = 10*1000
 let msDuration = duration*1000
 let bitsPerSample = 16s
 let tracks = 1s
@@ -36,15 +36,14 @@ let getHeaders () =
         yield BitConverter.GetBytes(dataChunkSize)
      } |> Array.concat
 
-
+let volume = 16300us
+let amp:double = (double)(volume >>> 2) // so we simply set amp = volume / 2
+let frequency = 440us
+let tau :double= 2.0 * Math.PI
+let theta :double= (double)frequency * tau / (double)samplesPerSecond;
 let rec sound t = seq {
     // 'volume' is UInt16 with range 0 thru Uint16.MaxValue ( = 65 535)
     // we need 'amp' to have the range of 0 thru Int16.MaxValue ( = 32 767)
-    let volume = 16300us
-    let amp:double = (double)(volume >>> 2) // so we simply set amp = volume / 2
-    let frequency = 440us
-    let tau :double= 2.0 * Math.PI
-    let theta :double= (double)frequency * tau / (double)samplesPerSecond;
     yield! BitConverter.GetBytes((uint16)(amp * Math.Sin(theta * (double)t)))
     if (t < samplesPerSecond*duration) then yield! sound ((t+1))
 } 
@@ -80,7 +79,7 @@ let main argv =
 
     let ws = new WaveStream()
     let reader = new NAudio.Wave.RawSourceWaveStream(ws, new WaveFormat(samplesPerSecond,(int)bitsPerSample,(int)tracks))
-    let wavePlayer = new DirectSoundOut(latency=1000);
+    let wavePlayer = new DirectSoundOut(latency=2000);
     wavePlayer.Init(reader);
     wavePlayer.Play()
     Console.ReadKey() |> ignore
