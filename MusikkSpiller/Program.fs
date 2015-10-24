@@ -2,17 +2,18 @@
 open System.Collections.Generic
 open System.IO
 open System.Linq
+open NAudio.Wave
 
 let samplesPerSecond = 44100
 let duration = 10
 let msDuration = duration*1000
+let bitsPerSample = 16s
+let tracks = 1s
 
 let getHeaders () =
     let formatChunkSize = 16
     let headerSize = 8
     let formatType= 1s
-    let tracks = 1s
-    let bitsPerSample = 16s
     let frameSize = tracks * ((bitsPerSample + 7s) / 8s)
     let bytesPerSecond = samplesPerSecond * (int)frameSize
     let waveSize = 4;
@@ -51,7 +52,6 @@ let rec sound t = seq {
 let takeSkip (s: seq<byte>) (n: int) : (byte[] * seq<byte>) = 
     let takenValues = s |> Seq.truncate n |> Seq.toArray
     let s' = s |> Seq.skip takenValues.Length//try 
-    printf "Antall elementer %i" takenValues.Length
     (takenValues, s')
 
 type WaveStream() =
@@ -77,9 +77,11 @@ type WaveStream() =
 
 [<EntryPoint>]
 let main argv = 
+
     let ws = new WaveStream()
-    let buffer = new BufferedStream(ws, 4096*20)
-    let player = new System.Media.SoundPlayer(buffer)
-    player.Play()
+    let reader = new NAudio.Wave.RawSourceWaveStream(ws, new WaveFormat(samplesPerSecond,(int)bitsPerSample,(int)tracks))
+    let wavePlayer = new DirectSoundOut(latency=1000);
+    wavePlayer.Init(reader);
+    wavePlayer.Play()
     Console.ReadKey() |> ignore
     0 
