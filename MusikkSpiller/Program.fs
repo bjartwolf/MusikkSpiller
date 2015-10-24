@@ -4,7 +4,7 @@ open System.IO
 open System.Linq
 
 let samplesPerSecond = 44100
-let duration = 1
+let duration = 10
 let msDuration = duration*1000
 
 let getHeaders () =
@@ -16,7 +16,7 @@ let getHeaders () =
     let frameSize = tracks * ((bitsPerSample + 7s) / 8s)
     let bytesPerSecond = samplesPerSecond * (int)frameSize
     let waveSize = 4;
-    let samples = (int)(samplesPerSecond * msDuration / 1000)//wat
+    let samples = (int)(samplesPerSecond * msDuration / 1000)
     let dataChunkSize = samples * (int)frameSize;
     let fileSize = waveSize + headerSize + formatChunkSize + headerSize + dataChunkSize;
     seq {
@@ -49,9 +49,10 @@ let rec sound t = seq {
 } 
 
 let takeSkip (s: seq<byte>) (n: int) : (byte[] * seq<byte>) = 
-    let c = Seq.cache s 
-    let skipValues = Math.Min(n,c |> Seq.length)
-    (c |> Seq.truncate n |> Seq.toArray , c |> Seq.skip skipValues)
+    let takenValues = s |> Seq.truncate n |> Seq.toArray
+    let s' = s |> Seq.skip takenValues.Length//try 
+    printf "Antall elementer %i" takenValues.Length
+    (takenValues, s')
 
 type WaveStream() =
    inherit Stream()
@@ -77,7 +78,8 @@ type WaveStream() =
 [<EntryPoint>]
 let main argv = 
     let ws = new WaveStream()
-    let player = new System.Media.SoundPlayer(ws)
+    let buffer = new BufferedStream(ws, 4096*20)
+    let player = new System.Media.SoundPlayer(buffer)
     player.Play()
     Console.ReadKey() |> ignore
     0 
