@@ -23,8 +23,8 @@ let b (t:double): Vector<double> = 0.0 * rho * vector [Math.Sin (w*t) ;
                                                       0.0;
                                                       0.0;
                                                       0.0]
-let L = 1.0
-let T = 5.0
+let L = 10.0
+let T = 100.0
 let deltaX = L/4.0
 let alpha:double = (T/rho)/(deltaX ** 2.0)
 let m : Matrix<double> = matrix [[  0.0;  0.0;  0.0; 1.0; 0.0; 0.0 ]
@@ -33,11 +33,11 @@ let m : Matrix<double> = matrix [[  0.0;  0.0;  0.0; 1.0; 0.0; 0.0 ]
                                  [  -2.0*alpha; 1.0*alpha;  0.0; 0.0; 0.0; 0.0 ]
                                  [ 1.0*alpha;  -2.0*alpha; 1.0*alpha; 0.0; 0.0; 0.0 ]
                                  [  0.0; 1.0*alpha; -2.0*alpha; 0.0; 0.0; 0.0 ]]
-let sol = Seq.unfold (fun xu -> Some(xu, rk4 0.01 (fun (t,x) -> m * x + (b t)) xu)) (0.0, x0) 
-        |> Seq.take 100 
+let sol = Seq.unfold (fun xu -> Some(xu, rk4 0.0014 (fun (t,x) -> m * x + (b t)) xu)) (0.0, x0) 
+//        |> Seq.take 100 
         |> Seq.map snd
-        |> Seq.toArray
-        |> Array.map (fun x -> x.[1]) 
+//        |> Seq.toArray
+        |> Seq.map (fun x -> x.[1]) 
 
 for value in sol do
     printf "%A 

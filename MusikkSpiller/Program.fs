@@ -3,12 +3,50 @@ open System.Collections.Generic
 open System.IO
 open System.Linq
 open NAudio.Wave
+open FSharp.Charting
 
 let samplesPerSecond = 44100
 let duration = 10*1000
 let msDuration = duration*1000
 let bitsPerSample = 16s
 let tracks = 1s
+
+open MathNet.Numerics.LinearAlgebra
+open MathNet
+open System
+open MathNet.Numerics
+
+let rk4 h (f: double * Vector<double> -> Vector<double>) (t, x) =
+  let k1:Vector<double> = h * f(t, x)
+  let k2 = h * f(t + 0.5*h, x + 0.5*k1)
+  let k3 = h * f(t + 0.5*h, x + 0.5*k2)
+  let k4 = h * f(t + h, x + k3)
+  (t + h, x + (k1 / 6.0) + (k2 / 3.0) + (k3 / 3.0) + (k4 / 6.0))
+
+//http://www4.ncsu.edu/eos/users/w/white/www/white/ma302/less1108.pdf
+
+let x0: Vector<double>= vector [1.0; 2.0; 2.0;0.0;0.0;0.0]
+let rho = 1.0
+let w = 5.84
+let b (t:double): Vector<double> = 0.0 * rho * vector [Math.Sin (w*t) ;
+                                                      Math.Sqrt(2.0) * Math.Sin(w*t);
+                                                      Math.Sin(w*t);
+                                                      0.0;
+                                                      0.0;
+                                                      0.0]
+let L = 2.0
+let T = 10.0
+let deltaX = L/4.0
+let alpha:double = (T/rho)/(deltaX ** 2.0)
+let m : Matrix<double> = matrix [[  0.0;  0.0;  0.0; 1.0; 0.0; 0.0 ]
+                                 [  0.0;  0.0;  0.0; 0.0; 1.0; 0.0 ]
+                                 [  0.0;  0.0;  0.0; 0.0; 0.0; 1.0 ]
+                                 [  -2.0*alpha; 1.0*alpha;  0.0; 0.0; 0.0; 0.0 ]
+                                 [ 1.0*alpha;  -2.0*alpha; 1.0*alpha; 0.0; 0.0; 0.0 ]
+                                 [  0.0; 1.0*alpha; -2.0*alpha; 0.0; 0.0; 0.0 ]]
+let ode (t, x) = m * x + b t
+let sol = Seq.unfold (fun xu -> Some(xu, rk4 0.01 ode xu)) (0.0, x0) 
+        |> Seq.map (snd >> fun x -> x.[1]) 
 
 let getHeaders () =
     let formatChunkSize = 16
@@ -44,10 +82,16 @@ let rec sound t = seq {
     let frequency = 440us
     let tau :double= 2.0 * Math.PI
     let theta :double= (double)frequency * tau / (double)samplesPerSecond;
-    yield! BitConverter.GetBytes((uint16)(amp * Math.Sin(theta * (double)t)))
-    //if (t < samplesPerSecond*duration) then yield! sound ((t+1))
+    yield! BitConverter.GetBytes((uint16)(amp * Math.Sin(theta * (double)t )))
     yield! sound (t+1)
 } 
+
+let guitar (value: double) =
+    let volume = 16300us
+    let amp:double = (double)(volume >>> 2) // so we simply set amp = volume / 2
+    BitConverter.GetBytes((uint16)(value * amp))
+
+let guitarSol = sol |> Seq.collect guitar
 
 let takeSkip (s: seq<byte>) (n: int) : (byte[] * seq<byte>) = 
     let takenValues = s |> Seq.truncate n |> Seq.toArray
@@ -56,7 +100,8 @@ let takeSkip (s: seq<byte>) (n: int) : (byte[] * seq<byte>) =
 
 type WaveStream() =
    inherit Stream()
-   let sounddata = sound 0
+//   let sounddata = sound 0
+   let sounddata = guitarSol 
    let mutable data = Seq.append (getHeaders()) sounddata 
    override this.CanRead with get () = true 
    override this.CanSeek with get () = false 
@@ -77,10 +122,12 @@ type WaveStream() =
 
 [<EntryPoint>]
 let main argv = 
-
     let ws = new WaveStream()
+//    Chart.Combine( 
+//        [ Chart.Line(guitarSol |> Seq.take 1000 , "rk4")
+//          Chart.Line (sound 0|> Seq.take 1000, "sine")]) |> Chart.Show
     let buffer = new BufferedStream(ws)
-    let reader = new NAudio.Wave.RawSourceWaveStream(buffer, new WaveFormat(samplesPerSecond,(int)bitsPerSample,(int)tracks))
+    let reader = new NAudio.Wave.RawSourceWaveStream(ws, new WaveFormat(samplesPerSecond,(int)bitsPerSample,(int)tracks))
     let wavePlayer = new DirectSoundOut(latency=2000);
     wavePlayer.Init(reader);
     wavePlayer.Play()
