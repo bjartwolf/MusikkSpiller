@@ -46,8 +46,11 @@ let m : Matrix<double> = matrix [[  0.0;  0.0;  0.0; 1.0; 0.0; 0.0 ]
                                  [ 1.0*alpha;  -2.0*alpha; 1.0*alpha; 0.0; 0.0; 0.0 ]
                                  [  0.0; 1.0*alpha; -2.0*alpha; 0.0; 0.0; 0.0 ]]
 let ode (t, x) = m * x + b t
-let sol = Seq.unfold (fun xu -> Some(xu, rk4 0.01 ode xu)) (0.0, x0) 
-        |> Seq.map (snd >> fun x -> x.[2]) 
+let t0 = 0.0
+let h = 0.01
+let sol = Seq.unfold (fun xu -> Some(xu, rk4 h ode xu)) (t0, x0) 
+        |> Seq.map ( fun (t,x) -> (t, x.[2])) 
+//        |> Seq.map (snd >> fun x -> x.[2]) 
 
 let getHeaders () =
     let formatChunkSize = 16
@@ -83,7 +86,7 @@ let rec sound t = seq {
     let frequency = 440us
     let tau :double= 2.0 * Math.PI
     let theta :double= (double)frequency * tau / (double)samplesPerSecond;
-    yield Math.Sin(theta * (double)t )
+    yield ((double)t/4.0, Math.Sin(theta * (double)t ))
     yield! sound (t+1)
 } 
 
@@ -92,7 +95,7 @@ let amp (value: double) =
     let amp:double = (double)(volume >>> 2) 
     (uint16)(value * amp)
 
-let guitarSol = sol |> Seq.map (amp >> BitConverter.GetBytes) |> Seq.collect id
+let guitarSol = sol |> Seq.map (snd >> amp >> BitConverter.GetBytes) |> Seq.collect id
 
 let takeSkip (s: seq<byte>) (n: int) : (byte[] * seq<byte>) = 
     let takenValues = s |> Seq.truncate n |> Seq.toArray
@@ -124,9 +127,14 @@ type WaveStream() =
 let main argv = 
     Control.UseManaged()
     let ws = new WaveStream()
-    Chart.Combine( 
-        [ Chart.Line(sol|> Seq.take 5000, "rk4")
-          Chart.Line (sound 0|> Seq.take 5000, "sine")]) |> Chart.Show
+//    Chart.Combine( 
+//        [ Chart.Line(sol|> Seq.take 5000, "rk4")
+//          Chart.Line (sound 0|> Seq.take 5000, "sine")]) |> Chart.Show
+    let data = sol |> Seq.take 2000 
+    let samples = sol |> Seq.map (fun (x,y) -> new complex(x,y)) |> Seq.take 2000 |> Seq.toArray
+//    let samples = [| new complex(5.0, 0.0); new complex(6.0, 0.0); new complex(1.0, 0.0); new complex(2.0, 0.0); new complex(5.0, 0.0)|]
+    MathNet.Numerics.IntegralTransforms.Fourier.BluesteinForward(samples, Numerics.IntegralTransforms.FourierOptions.Default)
+    Chart.Point(samples  |> Array.map (fun x -> (x.Imaginary, x.Real)) |> Array.toList) |> Chart.Show 
     let buffer = new BufferedStream(ws)
     Console.WriteLine(Control.LinearAlgebraProvider);
     let reader = new NAudio.Wave.RawSourceWaveStream(ws, new WaveFormat(samplesPerSecond,(int)bitsPerSample,(int)tracks))
