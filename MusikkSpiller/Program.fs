@@ -130,9 +130,7 @@ let main argv =
 //    Chart.Combine( 
 //        [ Chart.Line(sol|> Seq.take 5000, "rk4")
 //          Chart.Line (sound 0|> Seq.take 5000, "sine")]) |> Chart.Show
-    let data = sol |> Seq.take 2000 
     let samples = sol |> Seq.map (fun (x,y) -> new complex(x,y)) |> Seq.take 2000 |> Seq.toArray
-//    let samples = [| new complex(5.0, 0.0); new complex(6.0, 0.0); new complex(1.0, 0.0); new complex(2.0, 0.0); new complex(5.0, 0.0)|]
     MathNet.Numerics.IntegralTransforms.Fourier.BluesteinForward(samples, Numerics.IntegralTransforms.FourierOptions.Default)
     Chart.Point(samples  |> Array.map (fun x -> (x.Imaginary, x.Real)) |> Array.toList) |> Chart.Show 
     let buffer = new BufferedStream(ws)
