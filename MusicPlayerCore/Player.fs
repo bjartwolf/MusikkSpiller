@@ -2,17 +2,7 @@
 
 module Player =
     open System
-    open System.IO
-    open WaveFormat
-
-    let samplesPerSecond = 44100
-    let duration = 10*1000
-    let msDuration = duration*1000
-    let bitsPerSample = 16s
-    let tracks = 1s
-
     open MathNet.Numerics.LinearAlgebra
-
     let rk4 h (f: double * Vector<double> -> Vector<double>) (t, x) =
       let k1:Vector<double> = h * f(t, x)
       let k2 = h * f(t + 0.5*h, x + 0.5*k1)
@@ -60,30 +50,4 @@ module Player =
         (uint16)(value * amp)
 
     let guitarSol = sol |> Seq.map (snd >> amp >> BitConverter.GetBytes) |> Seq.collect id
-
-    let takeSkip (s: seq<byte>) (n: int) : (byte[] * seq<byte>) = 
-        let takenValues = s |> Seq.truncate n |> Seq.toArray
-        let s' = s |> Seq.skip takenValues.Length//try 
-        (takenValues, s')
-
-    type WaveStream() =
-       inherit Stream()
-       let sounddata = guitarSol 
-       let mutable data = Seq.append (getHeaders tracks bitsPerSample samplesPerSecond msDuration) sounddata 
-       override this.CanRead with get () = true 
-       override this.CanSeek with get () = false 
-       override this.CanWrite with get () = false 
-       override this.Read(buffer: byte[], offset:int, count: int) =
-                let (bytes,data') = takeSkip data count 
-                data <- data'
-                bytes.CopyTo(buffer,offset )
-                bytes.Length
-       override this.Seek(offset:int64, origin: SeekOrigin):int64 = failwith "no seek"
-       override this.SetLength(value: int64) = failwith "no set length"
-       override this.Write(buffer: byte[], offset:int, count:int) = failwith "no write"
-       override this.Length with get () = failwith "no length I am infinite" 
-       override this.Position with get () = failwith "no position" 
-                              and set (value) = failwith "no set pos" 
-       override this.Flush() = ()
-
 

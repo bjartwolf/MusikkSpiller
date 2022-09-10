@@ -1,5 +1,6 @@
 ﻿module WaveFormat 
     open System
+    open System.IO
 
     let getHeaders tracks bitsPerSample samplesPerSecond msDuration =
         let formatChunkSize = 16
@@ -27,5 +28,28 @@
             yield BitConverter.GetBytes(dataChunkSize)
          } |> Array.concat
 
+    let takeSkip (s: seq<byte>) (n: int) : (byte[] * seq<byte>) = 
+        let takenValues = s |> Seq.truncate n |> Seq.toArray
+        let s' = s |> Seq.skip takenValues.Length//try 
+        (takenValues, s')
 
+    type WaveStream (sound: seq<byte>, tracks, bitsPerSample, samplesPerSecond, msDuration) =
+       inherit Stream()
+       let sounddata = sound 
+       let mutable data = Seq.append (getHeaders tracks bitsPerSample samplesPerSecond msDuration) sounddata 
+       override this.CanRead with get () = true 
+       override this.CanSeek with get () = false 
+       override this.CanWrite with get () = false 
+       override this.Read(buffer: byte[], offset:int, count: int) =
+                let (bytes,data') = takeSkip data count 
+                data <- data'
+                bytes.CopyTo(buffer,offset )
+                bytes.Length
+       override this.Seek(offset:int64, origin: SeekOrigin):int64 = failwith "no seek"
+       override this.SetLength(value: int64) = failwith "no set length"
+       override this.Write(buffer: byte[], offset:int, count:int) = failwith "no write"
+       override this.Length with get () = failwith "no length I am infinite" 
+       override this.Position with get () = failwith "no position" 
+                              and set (value) = failwith "no set pos" 
+       override this.Flush() = ()
 
