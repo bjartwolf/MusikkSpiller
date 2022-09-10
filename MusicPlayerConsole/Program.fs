@@ -1,5 +1,5 @@
 ﻿open NAudio.Wave
-open MusicPlayerCore.Player 
+open WaveFormat
 open System
 
 [<EntryPoint>]
@@ -11,7 +11,7 @@ let main argv =
     let bitsPerSample = 16s
     let tracks = 1s
 
-    let ws = new WaveFormat.WaveStream(MusicPlayerCore.Player.guitarSol, tracks, bitsPerSample, samplesPerSecond, msDuration )
+    let ws = new SoundsStream(MusicPlayerCore.Player.guitarSol, tracks, bitsPerSample, samplesPerSecond, msDuration )
     let reader = new NAudio.Wave.RawSourceWaveStream(ws, new WaveFormat(samplesPerSecond,(int)bitsPerSample,(int)tracks))
     let wavePlayer = new DirectSoundOut(latency=2000);
     wavePlayer.Init(reader);

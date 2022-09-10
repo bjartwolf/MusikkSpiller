@@ -33,7 +33,7 @@
         let s' = s |> Seq.skip takenValues.Length//try 
         (takenValues, s')
 
-    type WaveStream (sound: seq<byte>, tracks, bitsPerSample, samplesPerSecond, msDuration) =
+    type SoundsStream (sound: seq<byte>, tracks, bitsPerSample, samplesPerSecond, msDuration) =
        inherit Stream()
        let sounddata = sound 
        let mutable data = Seq.append (getHeaders tracks bitsPerSample samplesPerSecond msDuration) sounddata 
