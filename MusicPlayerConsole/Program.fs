@@ -1,9 +1,6 @@
 ﻿open System
-open System.Collections.Generic
 open System.IO
-open System.Linq
 open NAudio.Wave
-//open FSharp.Charting
 
 let samplesPerSecond = 44100
 let duration = 10*1000
@@ -12,9 +9,6 @@ let bitsPerSample = 16s
 let tracks = 1s
 
 open MathNet.Numerics.LinearAlgebra
-open MathNet
-open System
-open MathNet.Numerics
 
 let rk4 h (f: double * Vector<double> -> Vector<double>) (t, x) =
   let k1:Vector<double> = h * f(t, x)
@@ -78,18 +72,6 @@ let getHeaders () =
         yield BitConverter.GetBytes(dataChunkSize)
      } |> Array.concat
 
-    // 'volume' is UInt16 with range 0 thru Uint16.MaxValue ( = 65 535)
-    // we need 'amp' to have the range of 0 thru Int16.MaxValue ( = 32 767)
-let rec sound t = seq {
-    let volume = 16300us
-    let amp:double = (double)(volume >>> 2) // so we simply set amp = volume / 2
-    let frequency = 440us
-    let tau :double= 2.0 * Math.PI
-    let theta :double= (double)frequency * tau / (double)samplesPerSecond;
-    yield ((double)t/4.0, Math.Sin(theta * (double)t ))
-    yield! sound (t+1)
-} 
-
 let amp (value: double) =
     let volume = 16300us
     let amp:double = (double)(volume >>> 2) 
@@ -104,7 +86,6 @@ let takeSkip (s: seq<byte>) (n: int) : (byte[] * seq<byte>) =
 
 type WaveStream() =
    inherit Stream()
-//   let sounddata = sound 0 |> Seq.map (amp >> BitConverter.GetBytes) |> Seq.collect id
    let sounddata = guitarSol 
    let mutable data = Seq.append (getHeaders()) sounddata 
    override this.CanRead with get () = true 
@@ -125,16 +106,7 @@ type WaveStream() =
 
 [<EntryPoint>]
 let main argv = 
-//    Control.UseManaged()
     let ws = new WaveStream()
-//    Chart.Combine( 
-//        [ Chart.Line(sol|> Seq.take 5000, "rk4")
-//          Chart.Line (sound 0|> Seq.take 5000, "sine")]) |> Chart.Show
-    let samples = sol |> Seq.map (fun (x,y) -> new complex(x,y)) |> Seq.take 2000 |> Seq.toArray
- //   MathNet.Numerics.IntegralTransforms.Fourier.BluesteinForward(samples, Numerics.IntegralTransforms.FourierOptions.Default)
-//    Chart.Point(samples  |> Array.map (fun x -> (x.Imaginary, x.Real)) |> Array.toList) |> Chart.Show 
-    let buffer = new BufferedStream(ws)
-//    Console.WriteLine(Control.LinearAlgebraProvider);
     let reader = new NAudio.Wave.RawSourceWaveStream(ws, new WaveFormat(samplesPerSecond,(int)bitsPerSample,(int)tracks))
     let wavePlayer = new DirectSoundOut(latency=2000);
     wavePlayer.Init(reader);
