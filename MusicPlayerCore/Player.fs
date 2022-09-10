@@ -21,9 +21,9 @@ module Player =
     let rho = 1.0
     //let w = 5.84
     let w = 9.6812 
-    let b (t:double): Vector<double> = rho * vector [Math.Sin (w*t) ;
-                                                     Math.Sqrt(2.0) * Math.Sin(w*t);
-                                                     Math.Sin(w*t);
+    let b (t:double): Vector<double> = rho * vector [0; //Math.Sin (w*t) ;
+                                                     0; //Math.Sqrt(2.0) * Math.Sin(w*t);
+                                                     0; //Math.Sin(w*t);
                                                      0.0;
                                                      0.0;
                                                      0.0]
