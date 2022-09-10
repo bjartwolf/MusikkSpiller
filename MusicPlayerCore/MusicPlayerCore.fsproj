@@ -6,6 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="WaveHeaders.fs" />
     <Compile Include="Player.fs" />
   </ItemGroup>
 
