@@ -17,8 +17,13 @@ let rk4 h (f: double * Vector<double> -> Vector<double>) (t, x) =
   let k4 = h * f(t + h, x + k3)
   (t + h, x + (k1 / 6.0) + (k2 / 3.0) + (k3 / 3.0) + (k4 / 6.0))
 
+//old link is broken
 //http://www4.ncsu.edu/eos/users/w/white/www/white/ma302/less1108.pdf
+// Perhaps this is the new linke
+// https://mmedvin.math.ncsu.edu/Teaching/MA302/A7_ma302.pdf
 
+// Or this?
+// https://www.youtube.com/watch?v=ndt-qwlCSLg
 let x0: Vector<double>= vector [1.0; 2.0; 1.0;0.0;0.0;0.0]
 let rho = 1.0
 //let w = 5.84
