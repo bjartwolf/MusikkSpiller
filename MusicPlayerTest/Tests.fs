@@ -16,8 +16,9 @@ let ``Stream can initialize as wave`` () =
 
     let ws = new SoundsStream(MusicPlayerCore.Player.guitarSol, tracks, bitsPerSample, samplesPerSecond, msDuration )
     let sr = new StreamReader(ws) 
-    let array = Array.zeroCreate 3 
-    sr.Read(array, 0,3) |> ignore
-    let expected = "RIF" 
+    let expected = "RIFF" 
     
+    let array = Array.zeroCreate expected.Length
+    sr.Read(array, 0, expected.Length) |> ignore
+
     Assert.Equal(expected, array |> Array.toList)
