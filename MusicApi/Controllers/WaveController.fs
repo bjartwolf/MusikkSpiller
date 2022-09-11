@@ -15,7 +15,7 @@ open Microsoft.Net.Http.Headers
 open Microsoft.Extensions.Primitives
 
 [<ApiController>]
-[<Route("[controller]")>]
+[<Route("wave.wav")>]
 type WaveController (logger : ILogger<WaveController>) =
     inherit ControllerBase()
 
