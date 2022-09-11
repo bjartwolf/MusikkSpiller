@@ -35,7 +35,7 @@ type WaveController (logger : ILogger<WaveController>) =
         __.Response.Headers.Add( HeaderNames.ContentType, StringValues( "audio/wave" ) )
 
         let outputStream = __.Response.Body
-        let bufferSize = 1 <<< 12 
+        let bufferSize = 1 <<< 16 
         let buffer = Array.zeroCreate<byte> bufferSize
         let mutable loop = true
         while loop do
