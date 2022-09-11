@@ -14,7 +14,6 @@ let main argv =
 
     let ws = new SoundsStream(MusicPlayerCore.Player.guitarSol, tracks, bitsPerSample, samplesPerSecond, msDuration )
     let reader = new NAudio.Wave.RawSourceWaveStream(ws, new WaveFormat(samplesPerSecond,(int)bitsPerSample,(int)tracks))
-    let fs = File.Open("output.wav", FileMode.OpenOrCreate)
     let wavePlayer = new DirectSoundOut(latency=2000);
     wavePlayer.Init(reader);
     wavePlayer.Play()
