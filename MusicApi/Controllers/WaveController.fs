@@ -2,15 +2,8 @@
 
 open NAudio.Wave
 open WaveFormat
-open System
-open System.Collections.Generic
-open System.Linq
-open System.Threading.Tasks
 open Microsoft.AspNetCore.Mvc
 open Microsoft.Extensions.Logging
-open MusicPlayerCore.Player 
-open System.IO
-open System.Text
 open Microsoft.Net.Http.Headers
 open Microsoft.Extensions.Primitives
 
