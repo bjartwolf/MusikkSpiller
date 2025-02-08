@@ -19,4 +19,7 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\MusicPlayerCore\MusicPlayerCore.fsproj" />
+  </ItemGroup>
 </Project>

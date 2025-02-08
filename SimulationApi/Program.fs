@@ -10,72 +10,28 @@ open Microsoft.Extensions.Logging
 open Microsoft.Extensions.DependencyInjection
 open Giraffe
 
-// ---------------------------------
-// Models
-// ---------------------------------
-
-type Message =
+type SimulationResult =
     {
-        Text : string
+        ts: double
+        value: double
+        nextResult: Uri
     }
-
-// ---------------------------------
-// Views
-// ---------------------------------
-
-module Views =
-    open Giraffe.ViewEngine
-
-    let layout (content: XmlNode list) =
-        html [] [
-            head [] [
-                title []  [ encodedText "SimulationApi" ]
-                link [ _rel  "stylesheet"
-                       _type "text/css"
-                       _href "/main.css" ]
-            ]
-            body [] content
-        ]
-
-    let partial () =
-        h1 [] [ encodedText "SimulationApi" ]
-
-    let index (model : Message) =
-        [
-            partial()
-            p [] [ encodedText model.Text ]
-        ] |> layout
-
-// ---------------------------------
-// Web app
-// ---------------------------------
-
-let indexHandler (name : string) =
-    let greetings = sprintf "Hello %s, from Giraffe!" name
-    let model     = { Text = greetings }
-    let view      = Views.index model
-    htmlView view
+let simulationHandler (state: double) =
+    let model     = { ts = 342; value = 34232; nextResult= new Uri(sprintf "/simulation/%f" (state+0.4), UriKind.Relative)}
+    json model
 
 let webApp =
     choose [
         GET >=>
             choose [
-                route "/" >=> indexHandler "world"
-                routef "/hello/%s" indexHandler
+                routef "/simulation/%f" simulationHandler 
             ]
         setStatusCode 404 >=> text "Not Found" ]
 
-// ---------------------------------
-// Error handler
-// ---------------------------------
 
 let errorHandler (ex : Exception) (logger : ILogger) =
     logger.LogError(ex, "An unhandled exception has occurred while executing the request.")
     clearResponse >=> setStatusCode 500 >=> text ex.Message
-
-// ---------------------------------
-// Config and Main
-// ---------------------------------
 
 let configureCors (builder : CorsPolicyBuilder) =
     builder
