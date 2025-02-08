@@ -9,15 +9,17 @@ open Microsoft.Extensions.Hosting
 open Microsoft.Extensions.Logging
 open Microsoft.Extensions.DependencyInjection
 open Giraffe
+open MusicPlayerCore
 
 type SimulationResult =
     {
         ts: double
-        value: double
+        value: double list
         nextResult: Uri
     }
+let solution = Player.sol
 let simulationHandler (state: double) =
-    let model     = { ts = 342; value = 34232; nextResult= new Uri(sprintf "/simulation/%f" (state+0.4), UriKind.Relative)}
+    let model     = { ts = state; value = (solution |> Seq.take 10 |> Seq.map snd |> Seq.toList); nextResult= new Uri(sprintf "/simulation/%f" (state+0.4), UriKind.Relative)}
     json model
 
 let webApp =
