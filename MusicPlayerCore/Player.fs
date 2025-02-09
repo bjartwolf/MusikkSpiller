@@ -9,6 +9,13 @@ module Player =
       let k3 = h * f(t + 0.5*h, x + 0.5*k2)
       let k4 = h * f(t + h, x + k3)
       (t + h, x + (k1 / 6.0) + (k2 / 3.0) + (k3 / 3.0) + (k4 / 6.0))
+      
+    let rk4_time_invariant h (f: Vector<double> -> Vector<double>) (x) =
+      let k1:Vector<double> = h * f(x)
+      let k2 = h * f(x + 0.5*k1)
+      let k3 = h * f(x + 0.5*k2)
+      let k4 = h * f(x + k3)
+      x + (k1 / 6.0) + (k2 / 3.0) + (k3 / 3.0) + (k4 / 6.0)
 
     //old link is broken
     //http://www4.ncsu.edu/eos/users/w/white/www/white/ma302/less1108.pdf
@@ -38,10 +45,14 @@ module Player =
                                      [ 1.0*alpha;  -2.0*alpha; 1.0*alpha; 0.0; 0.0; 0.0 ]
                                      [  0.0; 1.0*alpha; -2.0*alpha; 0.0; 0.0; 0.0 ]]
     let ode (t, x) = m * x + b t
+    let ode_time_invariant x = m * x 
     let t0 = 0.0
     let h = 0.01
+    let sol_time_invariant = Seq.unfold (fun xu -> Some(xu, rk4_time_invariant h ode_time_invariant xu)) 
     let sol = Seq.unfold (fun xu -> Some(xu, rk4 h ode xu)) (t0, x0) 
             |> Seq.map ( fun (t,x) -> (t, x.[2])) 
+//    let sol = Seq.unfold (fun xu -> Some(xu, rk4 h ode xu)) (t0, x0) // keep the time dependent one, but for now, not
+//            |> Seq.map ( fun (t,x) -> (t, x.[2])) 
     //        |> Seq.map (snd >> fun x -> x.[2]) 
 
     let amp (value: double) =
