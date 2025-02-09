@@ -29,6 +29,25 @@ module Views =
 
     let partial () =
         h1 [] [ encodedText "SimulationApi" ]
+        script [_type "application/javascript"] [
+            rawText """
+            async function fetchNext(url) {
+               const response = await fetch (url);
+               const result = await response.json();
+               console.log(result.values);
+               fetchNext(result.nextResult);
+            }
+             async function init() {
+               const response = await fetch ("/init/");
+               const result = await response.json();
+               console.log(result.values);
+               fetchNext(result.nextResult)
+            }
+            window.onload = function () {
+                init(); 
+            }
+            """
+        ]
 
     let index () =
         [
