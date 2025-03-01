@@ -43,13 +43,15 @@ module Views =
                 async function fetchNext(url) {{
                    const response = await fetch (url);
                    const result = await response.json();
-                   chartCtx.clearRect(0, 0, chart.width, chart.height);
+//                   chartCtx.clearRect(0, 0, chart.width, chart.height);
                    chartCtx.beginPath();
                    let i = 0;
-                   let nrOfResults = result.values.length;
-                   for (const value of result.values) {{
+//                   let nrOfResults = result.values.length;
+//                   for (const value of result.values) {{
+                   for (const value of result.twodvalues) {{
                         i = i + 1;
-                        chartCtx.lineTo(i*width/nrOfResults,(value+2.0)*100); 
+//                        chartCtx.lineTo(i*width/nrOfResults,(value+2.0)*100); 
+                          chartCtx.lineTo((value[0]+1)*300, (value[1]+1)*300); 
                    }}
                    chartCtx.stroke();
                    fetchNext(result.nextResult);
@@ -83,6 +85,11 @@ type SimulationResult =
         values: double array 
         nextResult: Uri
     }
+type SimulationResult2D =
+    {
+        twodvalues: double array array
+        nextResult: Uri
+    }
 let solver = Player.sol_time_invariant
 type stateVector = float * float * float * float * float * float  // floats are double in F#
 let simulationHandler ((s1,s2,s3,s4,s5,s6): stateVector) =
@@ -105,14 +112,14 @@ let simulationHarmonic (x, q)  =
     let nextValues = HarmonicOscillator.solve (vector [x;q]) |> Seq.take n |> Seq.toArray
     let nextState = nextValues |> Array.last
     let serializedState = sprintf "%f/%f" nextState.[0] nextState.[1]
-    let model = { values = (nextValues |> Array.map (fun x -> x.[1])); nextResult= new Uri(sprintf "/simulation/harmonic/%s" serializedState, UriKind.Relative)}
+    let model = { twodvalues = nextValues |> Array.map Vector.toArray; nextResult= new Uri(sprintf "/simulation/harmonic/%s" serializedState, UriKind.Relative)}
     json model
 let initHarmonicSimulator () =
     let x_0 = (vector [1.0;0.0]) 
     let nextValues = HarmonicOscillator.solve x_0 |> Seq.take n |> Seq.toArray
     let nextState = nextValues |> Array.last
     let serializedState = sprintf "%f/%f" nextState.[0] nextState.[1]
-    let model = { values = (nextValues |> Array.map (fun x -> x.[1])); nextResult= new Uri(sprintf "/simulation/harmonic/%s" serializedState, UriKind.Relative)}
+    let model = { twodvalues = nextValues |> Array.map Vector.toArray ; nextResult= new Uri(sprintf "/simulation/harmonic/%s" serializedState, UriKind.Relative)}
     json model
 
 let webApp =
