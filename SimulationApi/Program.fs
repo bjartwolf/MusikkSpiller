@@ -107,19 +107,20 @@ let initSimulation () =
     let model = { values = (nextValues |> Array.map (fun x -> x.[2])); nextResult= new Uri(sprintf "/simulationstring/%s" serializedState, UriKind.Relative)}
     json model
     
-let n = 20000 
+let n = 10
 let simulationHarmonic (x, q)  =
+    publicResponseCaching 3000 None >=> 
     let nextValues = HarmonicOscillator.solve (vector [x;q]) |> Seq.take n |> Seq.toArray
     let nextState = nextValues |> Array.last
     let serializedState = sprintf "%f/%f" nextState.[0] nextState.[1]
-    let model = { twodvalues = nextValues |> Array.map Vector.toArray; nextResult= new Uri(sprintf "/simulation/harmonic/%s" serializedState, UriKind.Relative)}
-    json model
+    let model = { twodvalues = nextValues |> Array.map Vector.toArray |> Array.skip 1; nextResult= new Uri(sprintf "/simulation/harmonic/%s" serializedState, UriKind.Relative)}
+    json model 
 let initHarmonicSimulator () =
     let x_0 = (vector [1.0;0.0]) 
     let nextValues = HarmonicOscillator.solve x_0 |> Seq.take n |> Seq.toArray
     let nextState = nextValues |> Array.last
     let serializedState = sprintf "%f/%f" nextState.[0] nextState.[1]
-    let model = { twodvalues = nextValues |> Array.map Vector.toArray ; nextResult= new Uri(sprintf "/simulation/harmonic/%s" serializedState, UriKind.Relative)}
+    let model = { twodvalues = nextValues |> Array.map Vector.toArray |> Array.skip 1; nextResult= new Uri(sprintf "/simulation/harmonic/%s" serializedState, UriKind.Relative)}
     json model
 
 let webApp =
@@ -162,8 +163,9 @@ let configureApp (app : IApplicationBuilder) =
         .UseGiraffe(webApp)
 
 let configureServices (services : IServiceCollection) =
-    services.AddCors()    |> ignore
-    services.AddGiraffe() |> ignore
+    services.AddResponseCaching() 
+            .AddCors()    
+            .AddGiraffe() |> ignore
 
 let configureLogging (builder : ILoggingBuilder) =
     builder.AddConsole()
