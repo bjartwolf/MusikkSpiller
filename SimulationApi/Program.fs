@@ -27,35 +27,48 @@ module Views =
             body [] content
         ]
 
-    let partial () =
-        h1 [] [ encodedText "SimulationApi" ]
-        script [_type "application/javascript"] [
-            rawText """
-            async function fetchNext(url) {
-               const response = await fetch (url);
-               const result = await response.json();
-               console.log(result.values);
-               fetchNext(result.nextResult);
-            }
-             async function init() {
-               const response = await fetch ("/init/");
-               const result = await response.json();
-               console.log(result.values);
-               fetchNext(result.nextResult)
-            }
-            window.onload = function () {
-                init(); 
-            }
-            """
+    let partial (initialUrl: string) =
+            [
+            h1 [] [ encodedText "SimulationApi" ]
+            canvas [_id "chart"; _width "1500"; _height "1500"] []
+            script [_type "application/javascript"] [
+                rawText $"""
+                const chart = document.getElementById("chart");
+                const chartCtx = chart.getContext("2d");
+                chartCtx.strokeStyle = 'blue';
+                chartCtx.lineWidth = 2;
+
+                async function fetchNext(url) {{
+                   const response = await fetch (url);
+                   const result = await response.json();
+                   chartCtx.clearRect(0, 0, chart.width, chart.height);
+                   chartCtx.beginPath();
+                   let i = 0;
+                   for (const value of result.values) {{
+                        i = i + 1; 
+                //        console.log(i,value)
+                        chartCtx.lineTo(i,(value+2.0)*100); 
+                   }}
+                   chartCtx.stroke();
+                   fetchNext(result.nextResult);
+                }}
+                 async function init() {{
+                   const response = await fetch (%s{initialUrl});
+                   const result = await response.json();
+                   console.log(result.values);
+                   fetchNext(result.nextResult)
+                }}
+                window.onload = function () {{
+                    init(); 
+                }}
+                """
+        ]
         ]
 
-    let index () =
-        [
-            partial()
-        ] |> layout
+    let index (initialUrl: string) = partial(initialUrl) |> layout
 
-let indexHandler () =
-    let view = Views.index ()
+let indexHandler (initialUrl: string) =
+    let view = Views.index (initialUrl)
     htmlView view
 
 // do we need to return time... time is annoying
@@ -72,26 +85,26 @@ let solver = Player.sol_time_invariant
 type stateVector = float * float * float * float * float * float  // floats are double in F#
 let simulationHandler ((s1,s2,s3,s4,s5,s6): stateVector) =
     let x: Vector<double>= vector [s1;s2;s3;s4;s5;s6] // need to find some nice ways to map strings with numbers in them to a statevector
-    let nextValues = solver x |> Seq.take 100 |> Seq.toArray
+    let nextValues = solver x |> Seq.take 1000 |> Seq.toArray
     let nextState = nextValues |> Array.last
     let serializedState = sprintf "%f/%f/%f/%f/%f/%f" nextState.[0] nextState.[1] nextState.[2] nextState.[3] nextState.[4] nextState.[5] 
-    let model = {  values = (nextValues |> Array.map (fun x -> x.[2])); nextResult= new Uri(sprintf "/simulation/%s" serializedState, UriKind.Relative)}
+    let model = {  values = (nextValues |> Array.map (fun x -> x.[2])); nextResult= new Uri(sprintf "/simulationstring/%s" serializedState, UriKind.Relative)}
     json model
     
 let initSimulation () =
     let nextValues = solver Player.x0 |> Seq.take 100 |> Seq.toArray
     let nextState = nextValues |> Array.last
     let serializedState = sprintf "%f/%f/%f/%f/%f/%f" nextState.[0] nextState.[1] nextState.[2] nextState.[3] nextState.[4] nextState.[5] 
-    let model = { values = (nextValues |> Array.map (fun x -> x.[2])); nextResult= new Uri(sprintf "/simulation/%s" serializedState, UriKind.Relative)}
+    let model = { values = (nextValues |> Array.map (fun x -> x.[2])); nextResult= new Uri(sprintf "/simulationstring/%s" serializedState, UriKind.Relative)}
     json model
 
 let webApp =
     choose [
         GET >=>
             choose [
-                route "/" >=> indexHandler ()
-                route "/init/" >=> initSimulation () 
-                routef "/simulation/%f/%f/%f/%f/%f/%f" simulationHandler 
+                route "/" >=> indexHandler ("/initstring/")
+                route "/initstring/" >=> initSimulation () 
+                routef "/simulationstring/%f/%f/%f/%f/%f/%f" simulationHandler 
             ]
         setStatusCode 404 >=> text "Not Found" ]
 
