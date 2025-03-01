@@ -11,5 +11,5 @@ let w = 1.0
 let A = matrix [[ 0.0; -w ];[w; 0.0]]
 
 let ode (x: Vector<double>) = A * x
-let h = 0.0001
+let h = 0.001
 let solve = Seq.unfold (fun xu -> Some(xu, (forward_euler h) ode xu)) 

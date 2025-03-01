@@ -37,6 +37,8 @@ module Views =
                 const chartCtx = chart.getContext("2d");
                 chartCtx.strokeStyle = 'blue';
                 chartCtx.lineWidth = 2;
+                const width = chart.width;
+                console.log("Chart with: " + width);
 
                 async function fetchNext(url) {{
                    const response = await fetch (url);
@@ -44,10 +46,10 @@ module Views =
                    chartCtx.clearRect(0, 0, chart.width, chart.height);
                    chartCtx.beginPath();
                    let i = 0;
+                   let nrOfResults = result.values.length;
                    for (const value of result.values) {{
-                        i = i + 1; 
-                //        console.log(i,value)
-                        chartCtx.lineTo(i,(value+2.0)*100); 
+                        i = i + 1;
+                        chartCtx.lineTo(i*width/nrOfResults,(value+2.0)*100); 
                    }}
                    chartCtx.stroke();
                    fetchNext(result.nextResult);
@@ -98,15 +100,16 @@ let initSimulation () =
     let model = { values = (nextValues |> Array.map (fun x -> x.[2])); nextResult= new Uri(sprintf "/simulationstring/%s" serializedState, UriKind.Relative)}
     json model
     
+let n = 20000 
 let simulationHarmonic (x, q)  =
-    let nextValues = HarmonicOscillator.solve (vector [x;q]) |> Seq.take 10000 |> Seq.toArray
+    let nextValues = HarmonicOscillator.solve (vector [x;q]) |> Seq.take n |> Seq.toArray
     let nextState = nextValues |> Array.last
     let serializedState = sprintf "%f/%f" nextState.[0] nextState.[1]
     let model = { values = (nextValues |> Array.map (fun x -> x.[1])); nextResult= new Uri(sprintf "/simulation/harmonic/%s" serializedState, UriKind.Relative)}
     json model
 let initHarmonicSimulator () =
     let x_0 = (vector [1.0;0.0]) 
-    let nextValues = HarmonicOscillator.solve x_0 |> Seq.take 10000 |> Seq.toArray
+    let nextValues = HarmonicOscillator.solve x_0 |> Seq.take n |> Seq.toArray
     let nextState = nextValues |> Array.last
     let serializedState = sprintf "%f/%f" nextState.[0] nextState.[1]
     let model = { values = (nextValues |> Array.map (fun x -> x.[1])); nextResult= new Uri(sprintf "/simulation/harmonic/%s" serializedState, UriKind.Relative)}
