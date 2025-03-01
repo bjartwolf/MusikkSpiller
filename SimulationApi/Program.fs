@@ -53,7 +53,7 @@ module Views =
                    fetchNext(result.nextResult);
                 }}
                  async function init() {{
-                   const response = await fetch (%s{initialUrl});
+                   const response = await fetch("%s{initialUrl}");
                    const result = await response.json();
                    console.log(result.values);
                    fetchNext(result.nextResult)
@@ -85,7 +85,7 @@ let solver = Player.sol_time_invariant
 type stateVector = float * float * float * float * float * float  // floats are double in F#
 let simulationHandler ((s1,s2,s3,s4,s5,s6): stateVector) =
     let x: Vector<double>= vector [s1;s2;s3;s4;s5;s6] // need to find some nice ways to map strings with numbers in them to a statevector
-    let nextValues = solver x |> Seq.take 1000 |> Seq.toArray
+    let nextValues = solver x |> Seq.take 100 |> Seq.toArray
     let nextState = nextValues |> Array.last
     let serializedState = sprintf "%f/%f/%f/%f/%f/%f" nextState.[0] nextState.[1] nextState.[2] nextState.[3] nextState.[4] nextState.[5] 
     let model = {  values = (nextValues |> Array.map (fun x -> x.[2])); nextResult= new Uri(sprintf "/simulationstring/%s" serializedState, UriKind.Relative)}
@@ -97,12 +97,29 @@ let initSimulation () =
     let serializedState = sprintf "%f/%f/%f/%f/%f/%f" nextState.[0] nextState.[1] nextState.[2] nextState.[3] nextState.[4] nextState.[5] 
     let model = { values = (nextValues |> Array.map (fun x -> x.[2])); nextResult= new Uri(sprintf "/simulationstring/%s" serializedState, UriKind.Relative)}
     json model
+    
+let simulationHarmonic (x, q)  =
+    let nextValues = HarmonicOscillator.solve (vector [x;q]) |> Seq.take 10000 |> Seq.toArray
+    let nextState = nextValues |> Array.last
+    let serializedState = sprintf "%f/%f" nextState.[0] nextState.[1]
+    let model = { values = (nextValues |> Array.map (fun x -> x.[1])); nextResult= new Uri(sprintf "/simulation/harmonic/%s" serializedState, UriKind.Relative)}
+    json model
+let initHarmonicSimulator () =
+    let x_0 = (vector [1.0;0.0]) 
+    let nextValues = HarmonicOscillator.solve x_0 |> Seq.take 10000 |> Seq.toArray
+    let nextState = nextValues |> Array.last
+    let serializedState = sprintf "%f/%f" nextState.[0] nextState.[1]
+    let model = { values = (nextValues |> Array.map (fun x -> x.[1])); nextResult= new Uri(sprintf "/simulation/harmonic/%s" serializedState, UriKind.Relative)}
+    json model
 
 let webApp =
     choose [
         GET >=>
             choose [
                 route "/" >=> indexHandler ("/initstring/")
+                route "/harmonic" >=> indexHandler ("/harmonicinit")
+                route "/harmonicinit" >=> initHarmonicSimulator () 
+                routef "/simulation/harmonic/%f/%f" simulationHarmonic 
                 route "/initstring/" >=> initSimulation () 
                 routef "/simulationstring/%f/%f/%f/%f/%f/%f" simulationHandler 
             ]
