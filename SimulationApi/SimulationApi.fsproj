@@ -9,6 +9,7 @@
   <ItemGroup>
     <PackageReference Include="Giraffe" Version="6.4.0" />
     <PackageReference Include="Giraffe.ViewEngine" Version="1.4.*" />
+    <PackageReference Include="Mathnet.Numerics.FSharp" Version="5.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.ResponseCaching" Version="2.3.0" />
   </ItemGroup>
   <ItemGroup>
@@ -18,8 +19,5 @@
     </Content>
     <Compile Include="HarmonicOscillator.fs" />
     <Compile Include="Program.fs" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\MusicPlayerCore\MusicPlayerCore.fsproj" />
   </ItemGroup>
 </Project>

@@ -10,8 +10,6 @@ open Microsoft.Extensions.Hosting
 open Microsoft.Extensions.Logging
 open Microsoft.Extensions.DependencyInjection
 open Giraffe
-open Microsoft.IO
-open MusicPlayerCore
 
 module Views =
     open Giraffe.ViewEngine
@@ -43,7 +41,7 @@ module Views =
                 async function fetchNext(url) {{
                    const response = await fetch (url);
                    const result = await response.json();
-//                   chartCtx.clearRect(0, 0, chart.width, chart.height);
+                   chartCtx.clearRect(0, 0, chart.width, chart.height);
                    chartCtx.beginPath();
                    let i = 0;
 //                   let nrOfResults = result.values.length;
@@ -80,44 +78,23 @@ let indexHandler (initialUrl: string) =
 // delta T can for now be implicit
 // we do not return the entire state vector, just the measured values
 // but we do yield the latest state vector implicitly in the URL
-type SimulationResult =
-    {
-        values: double array 
-        nextResult: Uri
-    }
 type SimulationResult2D =
     {
         twodvalues: double array array
         nextResult: Uri
     }
-let solver = Player.sol_time_invariant
-type stateVector = float * float * float * float * float * float  // floats are double in F#
-let simulationHandler ((s1,s2,s3,s4,s5,s6): stateVector) =
-    let x: Vector<double>= vector [s1;s2;s3;s4;s5;s6] // need to find some nice ways to map strings with numbers in them to a statevector
-    let nextValues = solver x |> Seq.take 100 |> Seq.toArray
-    let nextState = nextValues |> Array.last
-    let serializedState = sprintf "%f/%f/%f/%f/%f/%f" nextState.[0] nextState.[1] nextState.[2] nextState.[3] nextState.[4] nextState.[5] 
-    let model = {  values = (nextValues |> Array.map (fun x -> x.[2])); nextResult= new Uri(sprintf "/simulationstring/%s" serializedState, UriKind.Relative)}
-    json model
-    
-let initSimulation () =
-    let nextValues = solver Player.x0 |> Seq.take 100 |> Seq.toArray
-    let nextState = nextValues |> Array.last
-    let serializedState = sprintf "%f/%f/%f/%f/%f/%f" nextState.[0] nextState.[1] nextState.[2] nextState.[3] nextState.[4] nextState.[5] 
-    let model = { values = (nextValues |> Array.map (fun x -> x.[2])); nextResult= new Uri(sprintf "/simulationstring/%s" serializedState, UriKind.Relative)}
-    json model
-    
+   
 let n = 100
 let simulationHarmonic (x, q)  =
-    publicResponseCaching 3000 None >=> 
-    let nextValues = HarmonicOscillator.solve (vector [x;q]) |> Seq.take n |> Seq.toArray
+    publicResponseCaching 10 None >=> 
+    let nextValues = Simulations.HarmonicOscillator.solve (vector [x;q]) |> Seq.take n |> Seq.toArray
     let nextState = nextValues |> Array.last
     let serializedState = sprintf "%.3f/%.3f" nextState.[0] nextState.[1]
     let model = { twodvalues = nextValues |> Array.map Vector.toArray |> Array.skip 1; nextResult= new Uri(sprintf "/simulation/harmonic/%s" serializedState, UriKind.Relative)}
     json model 
 let initHarmonicSimulator () =
     let x_0 = (vector [1.0;0.0]) 
-    let nextValues = HarmonicOscillator.solve x_0 |> Seq.take n |> Seq.toArray
+    let nextValues = Simulations.HarmonicOscillator.solve x_0 |> Seq.take n |> Seq.toArray
     let nextState = nextValues |> Array.last
     let serializedState = sprintf "%f/%f" nextState.[0] nextState.[1]
     let model = { twodvalues = nextValues |> Array.map Vector.toArray |> Array.skip 1; nextResult= new Uri(sprintf "/simulation/harmonic/%s" serializedState, UriKind.Relative)}
@@ -131,8 +108,6 @@ let webApp =
                 route "/harmonic" >=> indexHandler ("/harmonicinit")
                 route "/harmonicinit" >=> initHarmonicSimulator () 
                 routef "/simulation/harmonic/%f/%f" simulationHarmonic 
-                route "/initstring/" >=> initSimulation () 
-                routef "/simulationstring/%f/%f/%f/%f/%f/%f" simulationHandler 
             ]
         setStatusCode 404 >=> text "Not Found" ]
 
