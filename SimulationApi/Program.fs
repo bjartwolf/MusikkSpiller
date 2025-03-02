@@ -84,7 +84,7 @@ type SimulationResult2D =
         nextResult: Uri
     }
    
-let n = 100
+let n = 1000
 let simulationHarmonic (x, q)  =
     publicResponseCaching 10 None >=> 
     let nextValues = Simulations.HarmonicOscillator.solve (vector [x;q]) |> Seq.take n |> Seq.toArray
@@ -104,8 +104,7 @@ let webApp =
     choose [
         GET >=>
             choose [
-                route "/" >=> indexHandler ("/harmonicinit/")
-                route "/harmonic" >=> indexHandler ("/harmonicinit")
+                route "/harmonic" >=> indexHandler ("/harmonicinit/")
                 route "/harmonicinit" >=> initHarmonicSimulator () 
                 routef "/simulation/harmonic/%f/%f" simulationHarmonic 
             ]
