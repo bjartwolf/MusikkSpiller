@@ -104,7 +104,7 @@ let webApp =
     choose [
         GET >=>
             choose [
-                route "/" >=> indexHandler ("/initstring/")
+                route "/" >=> indexHandler ("/harmonicinit/")
                 route "/harmonic" >=> indexHandler ("/harmonicinit")
                 route "/harmonicinit" >=> initHarmonicSimulator () 
                 routef "/simulation/harmonic/%f/%f" simulationHarmonic 
