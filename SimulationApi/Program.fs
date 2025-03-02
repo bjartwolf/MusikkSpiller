@@ -107,12 +107,12 @@ let initSimulation () =
     let model = { values = (nextValues |> Array.map (fun x -> x.[2])); nextResult= new Uri(sprintf "/simulationstring/%s" serializedState, UriKind.Relative)}
     json model
     
-let n = 10
+let n = 100
 let simulationHarmonic (x, q)  =
     publicResponseCaching 3000 None >=> 
     let nextValues = HarmonicOscillator.solve (vector [x;q]) |> Seq.take n |> Seq.toArray
     let nextState = nextValues |> Array.last
-    let serializedState = sprintf "%f/%f" nextState.[0] nextState.[1]
+    let serializedState = sprintf "%.3f/%.3f" nextState.[0] nextState.[1]
     let model = { twodvalues = nextValues |> Array.map Vector.toArray |> Array.skip 1; nextResult= new Uri(sprintf "/simulation/harmonic/%s" serializedState, UriKind.Relative)}
     json model 
 let initHarmonicSimulator () =
